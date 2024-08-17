@@ -20,7 +20,7 @@ function App() {
   // const isLoggedin = useSelector(state => state.isLoggedin) | (localStorage.getItem("isLoggedin") === 'true');
   const isLoggedin = useSelector(state => state.authReducer.isLoggedin);
   const id = useSelector(state => state.authReducer.id);
-  const socket = io.connect(process.env.REACT_APP_SOCKET_URL || "http://localhost:3001");
+  const socket = io.connect(`${process.env.REACT_APP_SOCKET_URL}` || "http://localhost:3001");
 
   return (
     <ioContext.Provider value={{socket}}>
