@@ -47,7 +47,7 @@ function Home() {
       if (resp.data.code === 200 || resp.data.code === 404) {
         // console.log("all ok", resp.data.message);
 
-        setFeed([...feed, ...resp.data.message]);
+        setFeed([...resp.data.message]);
         setFetch(false);
         // dispatch(setUserName(resp.data.username));
         // resp.data.message.forEach((el) => dispatch(addPost(el)));

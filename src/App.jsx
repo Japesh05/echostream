@@ -12,9 +12,6 @@ import Lost from "./Error404/Lost";
 
 const ioContext = createContext();
 
-// sup db pass
-// W7AtlJxYZO1uIxQJ
-
 function App() {
   // const isLoggedin = useSelector(state => state.isLoggedin) | (localStorage.getItem("isLoggedin") === 'true');
   const isLoggedin = useSelector((state) => state.authReducer.isLoggedin);
