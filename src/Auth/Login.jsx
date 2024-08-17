@@ -25,6 +25,8 @@ function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  console.log(`The env variable is : ${process.env.REACT_APP_API_URL}`)
+
   // useEffect(() => {
   //   const handleLogin = async () => {
   //     if (Object.keys(formErrors).length === 0 && isSubmit && !success) {
