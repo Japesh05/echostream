@@ -70,7 +70,7 @@ function Login() {
         formValues.email = formValues.email.trim();
         try {
           const resp = await axios.post(
-            `${process.env.REACT_APP_API_URL}/auth/login`,
+            `https://echostream-api.onrender.com/auth/login`,
             formValues
           );
           if (resp.data.code === 200) {

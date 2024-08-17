@@ -43,7 +43,7 @@ function Post({ setFocus }) {
           console.log("inside post email: ", email);
           setUpload(true);
 
-          const resp = await axios.post(`${process.env.REACT_APP_API_URL}/post`, fd, {
+          const resp = await axios.post(`https://echostream-api.onrender.com/post`, fd, {
             headers: {
               "Content-Type": "multipart/form-data",
             },

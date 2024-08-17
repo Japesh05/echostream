@@ -14,7 +14,7 @@ function Bookmark() {
 
   const fetchBookmarks = async () => {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_URL}/post/getBookmark`,
+      `https://echostream-api.onrender.com/post/getBookmark`,
       {
         params: { userid: id },
       }

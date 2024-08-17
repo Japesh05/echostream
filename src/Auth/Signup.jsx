@@ -29,7 +29,7 @@ function Signup() {
         formValues.email = formValues.email.trim();
         try {
           const resp = await axios.post(
-            `${process.env.REACT_APP_API_URL}/auth/signup`,
+            `https://echostream-api.onrender.com/auth/signup`,
             formValues
           );
           if (resp.data.code === 200) {

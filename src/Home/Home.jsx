@@ -40,7 +40,7 @@ function Home() {
 
       // console.log("inside updatepost: ", email);
 
-      const resp = await axios.post(`${process.env.REACT_APP_API_URL}/post/feeds`, {
+      const resp = await axios.post(`https://echostream-api.onrender.com/post/feeds`, {
         email,
       });
 

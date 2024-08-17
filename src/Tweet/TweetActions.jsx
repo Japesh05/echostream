@@ -18,7 +18,7 @@ function TweetActions({ data }) {
 
   const bookmark = async (click) => {
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/post/updateBookmark`,
+      `https://echostream-api.onrender.com/post/updateBookmark`,
       {
         postid: data.postid,
         click: click,
@@ -28,7 +28,7 @@ function TweetActions({ data }) {
 
   const updateLike = async (likeClick) => {
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/post/updateLikes`,
+      `https://echostream-api.onrender.com/post/updateLikes`,
       {
         postid: data?.postid,
         likeClick: likeClick,
