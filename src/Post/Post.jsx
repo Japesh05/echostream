@@ -43,7 +43,7 @@ function Post({ setFocus }) {
           console.log("inside post email: ", email);
           setUpload(true);
 
-          const resp = await axios.post(`https://echostream-api.onrender.com/post`, fd, {
+          const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/post`, fd, {
             headers: {
               "Content-Type": "multipart/form-data",
             },

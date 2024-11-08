@@ -14,7 +14,7 @@ function Bookmark() {
 
   const fetchBookmarks = async () => {
     const response = await axios.get(
-      `https://echostream-api.onrender.com/post/getBookmark`,
+      `${import.meta.env.VITE_BACKEND_URL}/post/getBookmark`,
       {
         params: { userid: id },
       }

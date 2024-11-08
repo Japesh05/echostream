@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { FaLock, FaLockOpen } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import Spinner from "../Loader/Spinner";
+import { Link } from "react-router-dom";
+import { validateSignupForm } from "./formValidate";
+import VerifyOtp from "./VerifyOtp";
+import { signupRequest, generateOtp } from "../../requests";
+import toast, { Toaster } from "react-hot-toast";
+import Fetch from "../Loader/Fetch";
 
-function Signup() {
+const Signup = () =>  {
   const initialValues = {
     username: "",
     email: "",
@@ -15,77 +18,93 @@ function Signup() {
   const [formValues, setFormValues] = useState(initialValues);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmit, setIsSubmit] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const [email_id, setEmail_Id] = useState(
+    localStorage.getItem("email_id") || ""
+  );
+
+  const successToast = (message) => toast.success(`${message}`);
+  const errorToast = (message) => toast.error(`${message}`);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValues({ ...formValues, [name]: value });
   };
 
-  useEffect(() => {
-    const handleSignUp = async () => {
-      if (Object.keys(formErrors).length === 0 && isSubmit) {
-        formValues.email = formValues.email.trim();
-        try {
-          const resp = await axios.post(
-            `https://echostream-api.onrender.com/auth/signup`,
-            formValues
-          );
-          if (resp.data.code === 200) {
-            setTimeout(() => {
-              navigate("/auth/login");
-            }, 2000);
-          } else {
-            alert(`${resp.data.message} . Refresh the page`);
-          }
-        } catch (err) {
-          console.error(err);
+  const getOtp = async (email_id) => {
+    try {
+      const response = await generateOtp(email_id);
+      if (response.status === 200) {
+        return response.data.message;
+      }
+    } catch (err) {
+      errorToast("Failed to send OTP");
+      console.log(err);
+    }
+  };
+
+  const handleSignup = async () => {
+    if (isSubmit && Object.keys(formErrors).length === 0) {
+      formValues.email = formValues.email.trim();
+      setIsDisabled(true);
+      try {
+        const resp = await signupRequest(formValues);
+        if (resp.status === 200) {
+          console.log("resp: ", resp);
+          const message = await getOtp(formValues.email);
+          localStorage.setItem("email_id", formValues.email);
+          setEmail_Id(formValues.email);
+          setIsSuccess(true);
+          setIsSubmit(false);
+        }
+      } catch (err) {
+        console.log("err: ", err);
+        if (err.response.status === 401) {
+          errorToast("Email already exists");
+          setIsSubmit(false);
         }
       }
-    };
+      setIsDisabled(false);
+      return;
+    }
+    setIsSubmit(false);
+  };
 
-    handleSignUp();
-  }, [isSubmit, formErrors]);
+  useEffect(() => {
+    handleSignup();
+  }, [isSubmit]);
+
+  useEffect(() => {
+    const isOtpScreenShown = localStorage.getItem("shownOtpScreen") === "true";
+    setIsSuccess(isOtpScreenShown);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setFormErrors(validate(formValues));
+    setFormErrors(validateSignupForm(formValues));
     setIsSubmit(true);
   };
 
-  const validate = (values) => {
-    const errors = {};
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-    if (!values.username) {
-      errors.username = "*Required";
-    }
-    if (!values.email) {
-      errors.email = "*Required";
-    } else if (!regex.test(values.email)) {
-      errors.email = "This is not a valid email format!";
-    }
-    if (!values.password) {
-      errors.password = "*Required";
-    } else if (values.password.length < 4) {
-      errors.password = "Password must be more than 4 characters";
-    } else if (values.password.length > 10) {
-      errors.password = "Password cannot exceed more than 10 characters";
-    }
-    if (values.password !== values.confirmPassword) {
-      errors.confirmPassword = "Passwords didn't match. Try again.";
-    }
-    return errors;
-  };
-
-  return (
+  return isSuccess ? (
+    <VerifyOtp
+      email_id={email_id}
+      password = {formValues.password}
+      username = {formValues.username}
+      successToast={successToast}
+      errorToast={errorToast}
+      setSuccess={setIsSuccess}
+      setDisabled={setIsDisabled}
+      resend={getOtp}
+    />
+  ) : (
     <>
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="w-full max-w-md p-8 space-y-4 bg-white shadow-md rounded-md">
+        <div className="w-full max-w-md p-8 space-y-4 bg-white shadow-md rounded-md relative">
           <h2 className="text-2xl font-bold text-center text-gray-800">
             Sign Up
           </h2>
-          {Object.keys(formErrors).length === 0 && isSubmit && <Spinner />}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <input
@@ -156,8 +175,12 @@ function Signup() {
               )}
             </div>
             <button
-              type="submit"
-              className="w-full px-4 py-2 text-white bg-XSignIn rounded-md hover:bg-XhoverSignIn focus:outline-none focus:ring-2 focus:ring-green-500"
+              disabled={isDisabled}
+              className={`w-full px-2 py-2 mt-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                isDisabled
+                  ? "bg-XSignIn opacity-50 cursor-not-allowed"
+                  : "bg-XSignIn hover:bg-XhoverSignIn"
+              }`}
             >
               Submit
             </button>
@@ -169,7 +192,13 @@ function Signup() {
             </Link>
           </div>
         </div>
+        {isDisabled && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <Fetch />
+          </div>
+        )}
       </div>
+      <Toaster />
     </>
   );
 }

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { FaLock, FaLockOpen } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import Spinner from "../Loader/Spinner";
+import { validateLoginForm } from "./formValidate";
 import { useDispatch } from "react-redux";
 import {
   setId,
@@ -10,89 +10,70 @@ import {
   updateEmail,
   updateLogin,
 } from "../features/auth/authSlice";
+import { loginRequest } from "../../requests";
 
 function Login() {
   const initialValues = {
     email: "",
     password: "",
   };
+
   const [formValues, setFormValues] = useState(initialValues);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmit, setIsSubmit] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isDisabled, setisDisabled] = useState(false);
   const [userid, setUserid] = useState();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  console.log(`The env variable is : ${process.env.REACT_APP_API_URL}`)
+  const updateInfo = (resp) => {
+    dispatch(updateEmail(formValues.email));
+    localStorage.setItem("token", resp.data.token);
+    dispatch(setId(resp.data.id));
+    console.log("username is " + resp.data.username);
+    dispatch(updateUserName(resp.data.username));
+    setUserid(resp.data.id);
+    setSuccess(true);
+  };
 
-  // useEffect(() => {
-  //   const handleLogin = async () => {
-  //     if (Object.keys(formErrors).length === 0 && isSubmit && !success) {
-  //       formValues.email = formValues.email.trim();
-  //       try {
-  //         const resp = await axios.post(
-  //           "http://localhost:3000/auth/login",
-  //           formValues
-  //         );
-  //         if (resp.data.code === 200) {
-  //           dispatch(updateEmail(formValues.email));
-  //           localStorage.setItem("token", resp.data.token);
-  //           dispatch(setId(resp.data.id));
-  //           console.log("username is " + resp.data.username)
-  //           dispatch(setUserName(resp.data.username));
-  //           setUserid(resp.data.id);
-  //           setSuccess(true);
-  //         } else {
-  //           alert(`${resp.data.message}`);
-  //           setIsSubmit(false);
-  //           return;
-  //         }
-  //       } catch (err) {
-  //         console.log(err);
-  //       }
-  //     } else if (success) {
-  //       setTimeout(() => {
-  //         dispatch(updateLogin(true));
-  //         localStorage.setItem("isLoggedin", true);
-  //         navigate(`/home/${userid}`);
-  //       }, 2000);
-  //     }
-  //   };
+  const handleLogin = async () => {
+    if (Object.keys(formErrors).length === 0 && isSubmit && !success) {
+      formValues.email = formValues.email.trim();
+      setisDisabled(true);
+      try {
+        const resp = await loginRequest(formValues);
 
-  //   handleLogin();
-  // }, [isSubmit, formErrors, success]);
+        if (resp.status === 200) {
+          console.log("Hello bhai");
+          updateInfo(resp);
+          return;
+        }
+      } catch (err) {
+        if (err.response.status === 401) {
+          alert(`${err.response.data.message}`);
+          setIsSubmit(false);
+          setisDisabled(false);
+          return;
+        }
+        console.log("this is the error ", err);
+      }
+      return;
+    }
+
+    if (success) {
+      setTimeout(() => {
+        dispatch(updateLogin(true));
+        localStorage.setItem("isLoggedin", true);
+        navigate(`/home/${userid}`);
+      }, 2000);
+    }
+  };
 
   useEffect(() => {
-    const handleLogin = async () => {
-      if (Object.keys(formErrors).length === 0 && isSubmit && !success) {
-        formValues.email = formValues.email.trim();
-        try {
-          const resp = await axios.post(
-            `https://echostream-api.onrender.com/auth/login`,
-            formValues
-          );
-          if (resp.data.code === 200) {
-            dispatch(updateEmail(formValues.email));
-            localStorage.setItem("token", resp.data.token);
-            dispatch(setId(resp.data.id));
-            dispatch(updateUserName(resp.data.username)); 
-            setUserid(resp.data.id);
-            setSuccess(true);
-          } else {
-            alert(`${resp.data.message}`);
-            setIsSubmit(false);
-            return;
-          }
-        } catch (err) {
-          console.log(err);
-        }
-      }
-    };
-
     handleLogin();
-  }, [isSubmit, formErrors]); 
+  }, [isSubmit, formErrors, success]);
 
   useEffect(() => {
     if (success) {
@@ -100,9 +81,9 @@ function Login() {
         dispatch(updateLogin(true));
         localStorage.setItem("isLoggedin", true);
         navigate(`/home/${userid}`);
-      }, 2000); 
+      }, 2000);
     }
-  }, [success, userid]); 
+  }, [success, userid]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -111,28 +92,8 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setFormErrors(validate(formValues));
+    setFormErrors(validateLoginForm(formValues));
     setIsSubmit(true);
-  };
-
-  const validate = (values) => {
-    const errors = {};
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-
-    if (!values.email) {
-      errors.email = "*Required";
-    } else if (!regex.test(values.email)) {
-      errors.email = "This is not a valid email format!";
-    }
-    if (!values.password) {
-      errors.password = "*Required";
-    } else if (values.password.length < 4) {
-      errors.password = "Password must be more than 4 characters";
-    } else if (values.password.length > 10) {
-      errors.password = "Password cannot exceed more than 10 characters";
-    }
-
-    return errors;
   };
 
   return (
@@ -148,6 +109,7 @@ function Login() {
               </div>
               <div className="ui form">
                 <div className="field mb-4">
+                  {" "}
                   <input
                     type="email"
                     name="email"
@@ -182,7 +144,14 @@ function Login() {
                   <p className="text-red-600 mt-1">{formErrors.password}</p>
                 </div>
                 <div className="flex justify-center">
-                  <button className="w-full px-2 py-2 mt-2 text-white bg-XSignIn rounded-md hover:bg-XhoverSignIn focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <button
+                    disabled={isDisabled}
+                    className={`w-full px-2 py-2 mt-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDisabled
+                        ? "bg-XSignIn opacity-50 cursor-not-allowed"
+                        : "bg-XSignIn hover:bg-XhoverSignIn"
+                    }`}
+                  >
                     Submit
                   </button>
                 </div>

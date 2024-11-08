@@ -38,11 +38,12 @@ function Home() {
 
       setFetch(true);
 
-      // console.log("inside updatepost: ", email);
-
-      const resp = await axios.post(`https://echostream-api.onrender.com/post/feeds`, {
-        email,
-      });
+      const resp = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/post/feeds`,
+        {
+          email,
+        },
+      );
 
       if (resp.data.code === 200 || resp.data.code === 404) {
         // console.log("all ok", resp.data.message);
@@ -108,9 +109,8 @@ function Home() {
   return (
     <>
       <div
-        className={`text-white overflow-auto h-screen bg-black flex min-w-full ${
-          focus_t ? " bg-slate-900" : ""
-        }`}
+        className={`text-white overflow-auto h-screen bg-black flex min-w-full ${focus_t ? " bg-slate-900" : ""
+          }`}
       >
         <Sidebar />
         {feed.length > 0 ? (
